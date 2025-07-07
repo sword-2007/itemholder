@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Debt Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      padding: 2rem;
+    }
+    th, td {
+      padding: 1.5rem;
+      border-bottom: 1px solid #334155;
+    }
+    thead {
+      background: #1e40af;
+    }
+    th {
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 1.6rem;
+      text-align: left;
+    }
+    td {
+      font-size: 1.4rem;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-start p-6 min-h-screen bg-slate-900">
+
+  <div class="w-full max-w-7xl card mt-12">
+    <h1 class="text-4xl font-bold text-blue-400 text-center mb-10">Debt Records</h1>
+
+    <!-- Input Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <input id="debt-name" type="text" placeholder="Name" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-took" type="number" placeholder="Money Took" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-paid" type="number" placeholder="Money Paid" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-left" type="number" placeholder="Money Left" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-contact" type="text" placeholder="Contact" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-reason" type="text" placeholder="Reason" class="px-4 py-3 text-lg text-black rounded-md">
+    </div>
+    <div class="flex justify-end mb-6">
+      <button onclick="addDebt()" class="bg-blue-700 hover:bg-blue-800 px-6 py-3 text-white text-lg rounded-md"> Add Debt</button>
+    </div>
+
+    <!-- Table Section -->
+    <div class="overflow-x-auto border border-slate-600 rounded-lg">
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Money Took</th>
+            <th>Paid</th>
+            <th>Left</th>
+            <th>Contact</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="debt-list" class="bg-slate-800">
+          <!-- Debt rows inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
+      authDomain: "itemholder-62429.firebaseapp.com",
+      projectId: "itemholder-62429",
+      storageBucket: "itemholder-62429.appspot.com",
+      messagingSenderId: "609823818657",
+      appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        await loadDebts();
+      } else {
+        alert("Admin not logged in.");
+        window.location.href = "admin.html";
+      }
+    });
+
+    async function loadDebts() {
+      const tbody = document.getElementById("debt-list");
+      tbody.innerHTML = "";
+
+      const q = query(collection(db, "debts"), where("adminUid", "==", currentUser.uid));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${d.name}</td>
+          <td>${d.took}</td>
+          <td>${d.paid}</td>
+          <td>${d.left}</td>
+          <td>${d.contact}</td>
+          <td>${d.reason}</td>
+          <td>
+            <button onclick="editDebt('${id}', ${d.took})" class="text-blue-400 hover:underline mr-2">Edit</button>
+            <button onclick="deleteDebt('${id}')" class="text-red-400 hover:underline">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    window.addDebt = async function () {
+      const name = document.getElementById("debt-name").value.trim();
+      const took = parseInt(document.getElementById("debt-took").value);
+      const paid = parseInt(document.getElementById("debt-paid").value);
+      const left = parseInt(document.getElementById("debt-left").value);
+      const contact = document.getElementById("debt-contact").value.trim();
+      const reason = document.getElementById("debt-reason").value.trim();
+
+      if (!name || isNaN(took) || isNaN(paid) || isNaN(left)) {
+        alert("Please fill all fields properly.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "debts"), {
+          adminUid: currentUser.uid,
+          name, took, paid, left, contact, reason
+        });
+
+        // Clear form
+        document.getElementById("debt-name").value = "";
+        document.getElementById("debt-took").value = "";
+        document.getElementById("debt-paid").value = "";
+        document.getElementById("debt-left").value = "";
+        document.getElementById("debt-contact").value = "";
+        document.getElementById("debt-reason").value = "";
+
+        await loadDebts();
+      } catch (error) {
+        console.error("Error adding debt:", error);
+        alert("Error saving debt. See console for details.");
+      }
+    };
+
+    window.deleteDebt = async function (id) {
+      await deleteDoc(doc(db, "debts", id));
+      await loadDebts();
+    };
+
+    window.editDebt = async function (id, tookAmount) {
+      const newPaid = prompt("Enter new paid amount:");
+      if (newPaid !== null && !isNaN(newPaid)) {
+        const newLeft = tookAmount - parseInt(newPaid);
+        await updateDoc(doc(db, "debts", id), {
+          paid: parseInt(newPaid),
+          left: newLeft
+        });
+        await loadDebts();
+      }
+    };
+  </script>
+</body>
+</html>

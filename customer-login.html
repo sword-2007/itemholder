@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 1rem;
+      padding: 3rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    input::placeholder {
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen px-4">
+
+  <div class="card w-full max-w-md">
+    <h1 class="text-3xl font-bold text-center text-blue-400 mb-6">Customer Login</h1>
+
+    <label for="passcode" class="block text-lg mb-2">Enter Passcode</label>
+    <input id="passcode" type="text" placeholder="e.g. 112233" class="w-full px-5 py-3 mb-6 text-lg text-black rounded-md outline-none"/>
+
+    <button onclick="loginCustomer()" class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 text-lg rounded-md">
+       View Products
+    </button>
+  </div>
+
+  <script>
+    function loginCustomer() {
+      const code = document.getElementById("passcode").value.trim();
+      if (!code) {
+        alert("Please enter a valid passcode.");
+        return;
+      }
+      localStorage.setItem("customerPasscode", code);
+      window.location.href = "customer-view.html";
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,301 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ItemHolder Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      padding: 2rem;
+    }
+    .input {
+      @apply w-full border border-blue-500 bg-transparent text-white rounded-md px-10 py-6 text-3xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400;
+    }
+    .btn {
+      @apply px-12 py-6 text-3xl rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700;
+    }
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      margin-top: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    th, td {
+      padding: 1.5rem;
+      border-bottom: 1px solid #334155;
+    }
+    thead {
+      background: #1e40af;
+    }
+    th {
+      color: #cbd5e1;
+      text-align: left;
+      font-weight: 600;
+      font-size: 1.6rem;
+    }
+    td {
+      font-size: 1.4rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+    <div class="w-full max-w-7xl card relative">
+      <h1 class="text-5xl font-bold text-blue-400 text-center mb-12">Admin Product Dashboard</h1>
+
+      <!-- Passcode Display + Manage Debt Button -->
+      <div class="absolute top-6 right-6 flex items-center gap-4 z-10">
+        <div id="passcode-display" class="text-yellow-300 text-2xl font-bold bg-slate-800 px-6 py-3 rounded-lg shadow-lg"></div>
+        <button onclick="openPasscodeModal()" class="bg-blue-700 hover:bg-blue-800 text-white text-lg py-3 px-4 rounded-lg">
+          Change Passcode
+        </button>
+        <a href="debt.html">
+          <button class="bg-green-600 hover:bg-green-700 text-white text-lg font-semibold py-3 px-5 rounded-lg shadow-md">
+            Manage Debt
+          </button>
+        </a>
+      </div>
+
+      <!-- Total Products Summary -->
+      <div id="dashboard-summary" class="grid md:grid-cols-1 gap-6 mb-12">
+        <div class="bg-slate-800 p-6 rounded-xl shadow-lg text-2xl">
+          <p class="text-blue-300 font-semibold mb-2">Total Products</p>
+          <p id="total-products" class="text-4xl font-bold text-white">0</p>
+        </div>
+      </div>
+
+      <!-- Add Product Form -->
+      <div class="grid md:grid-cols-3 gap-10 mb-10">
+        <div>
+          <label class="block text-blue-200 mb-3 text-2xl">Product Name</label>
+          <input id="product-name" type="text" class="input" placeholder="Smartphone">
+        </div>
+        <div>
+          <label class="block text-blue-200 mb-3 text-2xl">Cost (₹)</label>
+          <input id="product-cost" type="number" class="input" placeholder="15000">
+        </div>
+        <div>
+          <label class="block text-blue-200 mb-3 text-2xl">Company</label>
+          <input id="product-company" type="text" class="input" placeholder="Realme">
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        <button onclick="addProduct()" class="btn w-full md:w-auto">Add Product</button>
+        <input type="text" id="search-bar" oninput="searchProducts()" placeholder="Search products..." class="input w-full md:w-[400px]"/>
+      </div>
+
+      <!-- Product Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Cost (₹)</th>
+              <th>Company</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="product-list" class="bg-slate-800">
+            <!-- Product rows here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Passcode Modal -->
+  <div id="passcodeModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-xl text-black">
+      <h2 class="text-2xl font-bold mb-6 text-center">Change Customer Passcode</h2>
+      <input id="new-passcode" type="text" placeholder="Enter new passcode" class="w-full border border-gray-400 rounded-md px-4 py-3 mb-4">
+      <div class="flex justify-between gap-4">
+        <button onclick="closePasscodeModal()" class="w-full py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
+        <button onclick="updatePasscode()" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
+      authDomain: "itemholder-62429.firebaseapp.com",
+      projectId: "itemholder-62429",
+      storageBucket: "itemholder-62429.appspot.com",
+      messagingSenderId: "609823818657",
+      appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    let currentAdminUid = null;
+    let allProducts = [];
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentAdminUid = user.uid;
+        await loadPasscode();
+        await loadProducts();
+      } else {
+        alert("You are not logged in. Redirecting...");
+        window.location.href = "admin.html";
+      }
+    });
+
+    async function loadPasscode() {
+      const docRef = doc(db, "admins", currentAdminUid);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("passcode-display").textContent = `Customer Passcode: ${data.passcode || "Not set"}`;
+      }
+    }
+
+    window.openPasscodeModal = function () {
+      document.getElementById("passcodeModal").style.display = "flex";
+    };
+
+    window.closePasscodeModal = function () {
+      document.getElementById("passcodeModal").style.display = "none";
+    };
+
+    window.updatePasscode = async function () {
+      const newPasscode = document.getElementById("new-passcode").value.trim();
+      if (!newPasscode) {
+        alert("Please enter a new passcode.");
+        return;
+      }
+
+      try {
+        const ref = doc(db, "admins", currentAdminUid);
+        await updateDoc(ref, { passcode: newPasscode });
+        document.getElementById("passcode-display").textContent = `Customer Passcode: ${newPasscode}`;
+        closePasscodeModal();
+        alert("Passcode updated successfully!");
+      } catch (err) {
+        console.error("Passcode update error:", err);
+        alert("Failed to update passcode.");
+      }
+    };
+
+    window.addProduct = async function () {
+      const name = document.getElementById("product-name").value.trim();
+      const cost = document.getElementById("product-cost").value.trim();
+      const company = document.getElementById("product-company").value.trim();
+
+      if (!name || !cost || !company) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      await addDoc(collection(db, "products"), {
+        name,
+        cost,
+        company,
+        adminUid: currentAdminUid,
+        createdAt: serverTimestamp()
+      });
+
+      document.getElementById("product-name").value = "";
+      document.getElementById("product-cost").value = "";
+      document.getElementById("product-company").value = "";
+
+      loadProducts();
+    }
+
+    async function loadProducts() {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+      const q = query(collection(db, "products"), where("adminUid", "==", currentAdminUid));
+      const snapshot = await getDocs(q);
+      allProducts = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        allProducts.push({ id: docSnap.id, ...data });
+      });
+
+      displayProducts(allProducts);
+      updateDashboardSummary();
+    }
+
+    function displayProducts(products) {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+
+      products.forEach((data) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${data.name}</td>
+          <td>₹${data.cost}</td>
+          <td>${data.company}</td>
+          <td class="text-center">
+            <button onclick="editProduct('${data.id}', '${data.name}', '${data.cost}', '${data.company}')" class="btn bg-yellow-400 text-black hover:bg-yellow-500">Edit</button>
+            <button onclick="deleteProduct('${data.id}')" class="btn bg-red-600 text-white hover:bg-red-700 ml-2">Delete</button>
+          </td>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    window.searchProducts = function () {
+      const term = document.getElementById("search-bar").value.toLowerCase();
+      const filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.company.toLowerCase().includes(term)
+      );
+      displayProducts(filtered);
+    }
+
+    window.deleteProduct = async function (id) {
+      await deleteDoc(doc(db, "products", id));
+      loadProducts();
+    }
+
+    window.editProduct = async function (id, currentName, currentCost, currentCompany) {
+      const newName = prompt("Edit Product Name:", currentName);
+      const newCost = prompt("Edit Product Cost:", currentCost);
+      const newCompany = prompt("Edit Product Company:", currentCompany);
+
+      if (newName && newCost && newCompany) {
+        const docRef = doc(db, "products", id);
+        await updateDoc(docRef, {
+          name: newName,
+          cost: newCost,
+          company: newCompany
+        });
+        loadProducts();
+      }
+    }
+
+    function updateDashboardSummary() {
+      document.getElementById("total-products").textContent = allProducts.length;
+    }
+  </script>
+</body>
+</html>

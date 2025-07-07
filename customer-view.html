@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Product View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      background: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      padding: 2rem;
+    }
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      margin-top: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    th, td {
+      padding: 1.5rem;
+      border-bottom: 1px solid #334155;
+    }
+    thead {
+      background: #1e40af;
+    }
+    th {
+      color: #cbd5e1;
+      text-align: left;
+      font-weight: 600;
+      font-size: 1.6rem;
+    }
+    td {
+      font-size: 1.4rem;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, query, where,
+      doc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
+      authDomain: "itemholder-62429.firebaseapp.com",
+      projectId: "itemholder-62429",
+      storageBucket: "itemholder-62429.appspot.com",
+      messagingSenderId: "609823818657",
+      appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const passcode = localStorage.getItem("customerPasscode");
+
+    if (!passcode) {
+      alert("No passcode found. Redirecting to login...");
+      window.location.href = "customer-login.html";
+    }
+
+    let allProducts = [];
+
+    async function fetchProducts() {
+      try {
+        const adminQuery = query(collection(db, "admins"), where("passcode", "==", passcode));
+        const adminSnap = await getDocs(adminQuery);
+
+        if (adminSnap.empty) {
+          document.getElementById("product-list").innerHTML =
+            '<tr><td colspan="3" class="text-center py-8 text-xl">Invalid passcode.</td></tr>';
+          return;
+        }
+
+        const adminDoc = adminSnap.docs[0];
+        const adminId = adminDoc.id;
+
+        const productQuery = query(collection(db, "products"), where("adminUid", "==", adminId));
+        const productSnap = await getDocs(productQuery);
+
+        if (productSnap.empty) {
+          document.getElementById("product-list").innerHTML =
+            '<tr><td colspan="3" class="text-center py-8 text-xl">No products available.</td></tr>';
+          return;
+        }
+
+        allProducts = productSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displayProducts(allProducts);
+        populateCompanyFilter(allProducts); // ← 🔥 NEW: populate company filter
+
+        await updateDoc(doc(db, "admins", adminId), { views: increment(1) });
+      } catch (err) {
+        console.error("🔥 fetchProducts error:", err);
+      }
+    }
+
+    function displayProducts(products) {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+      for (const p of products) {
+        list.innerHTML += `
+          <tr class="border-b border-slate-600">
+            <td class="px-6 py-4 text-lg">${p.name}</td>
+            <td class="px-6 py-4 text-lg">${p.cost}</td>
+            <td class="px-6 py-4 text-lg">${p.company}</td>
+          </tr>`;
+      }
+    }
+
+    // 🔄 NEW: Populate company filter based on product list
+    function populateCompanyFilter(products) {
+      const filter = document.getElementById("company-filter");
+      const uniqueCompanies = [...new Set(products.map(p => p.company))];
+      uniqueCompanies.sort();
+      filter.innerHTML = '<option value="">All Companies</option>';
+      uniqueCompanies.forEach(company => {
+        const option = document.createElement("option");
+        option.value = company;
+        option.textContent = company;
+        filter.appendChild(option);
+      });
+    }
+
+    // 🔍 Updated search to also filter by company
+    window.searchProducts = () => {
+      const term = document.getElementById("search-bar").value.toLowerCase();
+      const company = document.getElementById("company-filter").value.toLowerCase();
+
+      const filtered = allProducts.filter(p => {
+        const matchesName = p.name.toLowerCase().includes(term);
+        const matchesCompany = company === "" || p.company.toLowerCase() === company;
+        return matchesName && matchesCompany;
+      });
+
+      displayProducts(filtered);
+    };
+
+    window.downloadPDF = () => {
+      const list = document.getElementById("product-list");
+      if (list.children.length === 0) {
+        alert("No data to download.");
+        return;
+      }
+
+      const original = document.querySelector(".table-container");
+      const clone = original.cloneNode(true);
+      clone.style.background = "#ffffff";
+      clone.style.color = "#000000";
+      clone.querySelectorAll("th, td").forEach(el => {
+        el.style.color = "#000000";
+        el.style.background = "#ffffff";
+        el.style.border = "1px solid #000000";
+      });
+
+      const container = document.createElement("div");
+      container.appendChild(clone);
+      document.body.appendChild(container);
+      container.style.display = "none";
+
+      html2pdf().set({
+        margin: 0.5,
+        filename: 'Product_List.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      }).from(clone).save().then(() => {
+        container.remove();
+      });
+    };
+
+    window.onload = fetchProducts;
+  </script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-start p-6">
+
+  <div class="w-full max-w-7xl card mt-12">
+    <h1 class="text-4xl font-bold text-blue-400 text-center mb-10">Available Products</h1>
+
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 flex-wrap">
+      <div class="flex gap-4 flex-wrap">
+        <input id="search-bar" oninput="searchProducts()" type="text" placeholder="Search products..." class="w-full md:w-[400px] px-6 py-4 text-xl text-black rounded-md"/>
+        
+        <!-- 🔽 Now dynamically filled from JS -->
+        <select id="company-filter" onchange="searchProducts()" class="px-4 py-3 text-lg text-black rounded-md">
+          <option value="">All Companies</option>
+        </select>
+      </div>
+
+      <div class="flex gap-4 flex-wrap">
+        <button onclick="downloadPDF()" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 text-lg rounded-md">
+          Download PDF
+        </button>
+        <button onclick="window.location.href='invoice.html'" class="bg-green-700 hover:bg-green-800 text-white px-6 py-3 text-lg rounded-md">
+          Invoice
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Cost</th>
+            <th>Company</th>
+          </tr>
+        </thead>
+        <tbody id="product-list" class="bg-slate-800">
+          <!-- Product rows go here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

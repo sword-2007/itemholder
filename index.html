@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ItemHolder - Home</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">
+      ItemHolder
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <!-- Removed Debt Button -->
+      <button onclick="openLoginModal()">Login</button>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="overlay">
+      <h1>Welcome to ItemHolder</h1>
+      <p>Smart solution for shopkeepers to manage and showcase their product details online. From supermarkets to general stores — inventory made simple, accessible, and professional.
+In this page we had admin page and customer page we should create an account as admin and should create a passcode which helps the customer to login and also includes debt and invoice option also..</p>
+    </div>
+  </div>
+
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeLoginModal()">&times;</span>
+      <h2>Login As</h2>
+      <button onclick="window.location.href='admin.html'">Admin</button>
+      <button onclick="redirectToCustomer()">Customer</button>
+    </div>
+  </div>
+
+  <script>
+    function openLoginModal() {
+      document.getElementById('loginModal').style.display = 'block';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').style.display = 'none';
+    }
+
+    function redirectToCustomer() {
+      window.location.href = 'customer-login.html';
+    }
+
+    window.onclick = function(e) {
+      if (e.target === document.getElementById('loginModal')) closeLoginModal();
+    };
+  </script>
+</body>
+</html>
