@@ -102,7 +102,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
-      getFirestore, collection, query, where, getDocs, writeBatch, doc
+      getFirestore, collection, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -145,7 +145,7 @@
 
       allProducts = productSnap.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(p => true); // show all products for now (disable admin filtering)
+        .filter(p => p.userId === adminId); // ✅ filter by admin
 
       console.log("✅ Showing products:", allProducts.length);
 
@@ -159,19 +159,18 @@
       populateCompanyFilter(allProducts);
     }
 
-   function displayProducts(products) {
-  const list = document.getElementById("product-list");
-  list.innerHTML = "";
-  for (const p of products) {
-    list.innerHTML += `
-      <tr class="hover:bg-slate-700">
-        <td class="px-6 py-4">${p.name}</td>
-        <td class="px-6 py-4">${p.cost || p.price || "N/A"}</td>
-        <td class="px-6 py-4">${p.company}</td>
-      </tr>`;
-  }
-}
-
+    function displayProducts(products) {
+      const list = document.getElementById("product-list");
+      list.innerHTML = "";
+      for (const p of products) {
+        list.innerHTML += `
+          <tr class="hover:bg-slate-700">
+            <td class="px-6 py-4">${p.name}</td>
+            <td class="px-6 py-4">${p.cost || p.price || "N/A"}</td>
+            <td class="px-6 py-4">${p.company}</td>
+          </tr>`;
+      }
+    }
 
     function populateCompanyFilter(products) {
       const filter = document.getElementById("company-filter");
@@ -198,69 +197,60 @@
       displayProducts(filtered);
     };
 
-window.downloadPDF = () => {
-  const productList = document.getElementById("product-list");
-  if (!productList || productList.children.length === 0) {
-    alert("No products to download.");
-    return;
-  }
+    window.downloadPDF = () => {
+      const productList = document.getElementById("product-list");
+      if (!productList || productList.children.length === 0) {
+        alert("No products to download.");
+        return;
+      }
 
-  // Clone the existing visible table
-  const originalTable = document.querySelector("table");
-  const clone = originalTable.cloneNode(true);
+      const originalTable = document.querySelector("table");
+      const clone = originalTable.cloneNode(true);
 
-  // Replace undefined/empty cell content with "N/A"
-  clone.querySelectorAll("td").forEach(cell => {
-    if (!cell.textContent || cell.textContent.trim() === "" || cell.textContent === "undefined") {
-      cell.textContent = "N/A";
-    }
-  });
+      clone.querySelectorAll("td").forEach(cell => {
+        if (!cell.textContent || cell.textContent.trim() === "" || cell.textContent === "undefined") {
+          cell.textContent = "N/A";
+        }
+      });
 
-  // Style for PDF
-  clone.style.backgroundColor = "#ffffff";
-  clone.style.color = "#000000";
-  clone.style.fontSize = "12px";
-  clone.querySelectorAll("th, td").forEach(cell => {
-    cell.style.border = "1px solid #000";
-    cell.style.color = "#000";
-    cell.style.backgroundColor = "#fff";
-    cell.style.padding = "6px";
-  });
+      clone.style.backgroundColor = "#ffffff";
+      clone.style.color = "#000000";
+      clone.style.fontSize = "12px";
+      clone.querySelectorAll("th, td").forEach(cell => {
+        cell.style.border = "1px solid #000";
+        cell.style.color = "#000";
+        cell.style.backgroundColor = "#fff";
+        cell.style.padding = "6px";
+      });
 
-  // Create a container for PDF content
-  const pdfWrapper = document.createElement("div");
-  pdfWrapper.style.padding = "20px";
-  pdfWrapper.style.background = "#ffffff";
-  pdfWrapper.style.color = "#000000";
+      const pdfWrapper = document.createElement("div");
+      pdfWrapper.style.padding = "20px";
+      pdfWrapper.style.background = "#ffffff";
+      pdfWrapper.style.color = "#000000";
 
-  // Add heading
-  const heading = document.createElement("h2");
-  heading.textContent = "Available Products";
-  heading.style.textAlign = "center";
-  heading.style.marginBottom = "20px";
-  heading.style.fontSize = "18px";
-  heading.style.fontWeight = "bold";
-  pdfWrapper.appendChild(heading);
+      const heading = document.createElement("h2");
+      heading.textContent = "Available Products";
+      heading.style.textAlign = "center";
+      heading.style.marginBottom = "20px";
+      heading.style.fontSize = "18px";
+      heading.style.fontWeight = "bold";
+      pdfWrapper.appendChild(heading);
 
-  // Append cloned table
-  pdfWrapper.appendChild(clone);
-  document.body.appendChild(pdfWrapper);
+      pdfWrapper.appendChild(clone);
+      document.body.appendChild(pdfWrapper);
 
-  // Export as PDF
-  html2pdf()
-    .set({
-      margin: 0.5,
-      filename: 'ItemHolder_Products.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    })
-    .from(pdfWrapper)
-    .save()
-    .then(() => pdfWrapper.remove());
-};
-
-
+      html2pdf()
+        .set({
+          margin: 0.5,
+          filename: 'ItemHolder_Products.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        })
+        .from(pdfWrapper)
+        .save()
+        .then(() => pdfWrapper.remove());
+    };
 
     fetchProducts();
   </script>
