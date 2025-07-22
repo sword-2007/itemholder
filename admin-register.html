@@ -3,25 +3,168 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Signup - ItemHolder</title>
-  <link rel="stylesheet" href="admin.css" />
+  <title>Admin Register - ItemHolder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #0f0f0f, #1a1a1a);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .register-container {
+      background-color: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0, 255, 208, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #00ffd0;
+      text-shadow: 0 0 10px #00ffd0aa;
+    }
+
+    .input-container {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #222;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 1.1rem;
+    }
+
+    .toggle-password:hover {
+      color: #00ffd0;
+    }
+
+    .glow-btn {
+      background-color: transparent;
+      border: 2px solid #00ffd0;
+      color: #00ffd0;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .glow-btn::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #00ffd0, #00ffa2, #00ffd0);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      filter: blur(10px);
+    }
+
+    .glow-btn:hover::before {
+      opacity: 1;
+    }
+
+    .glow-btn:hover {
+      background-color: #00ffd0;
+      color: #000;
+      box-shadow: 0 0 15px #00ffd0;
+    }
+
+    .small-link {
+      color: #00ffd0;
+      text-align: center;
+      display: block;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    .error-message {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #f87171;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-  <div class="login-container">
-    <h1>Admin Sign Up</h1>
-    <input type="email" id="email" placeholder="Email (used as username)" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <input type="text" id="companyName" placeholder="Company Name" required />
-    <input type="text" id="customerPasscode" placeholder="Customer Passcode" required />
-    <button onclick="register()">Create Account</button>
-    <p id="message"></p>
-    <a href="admin.html">Already have an account? Login</a>
-  </div>
 
-  <script type="module">
+<div class="register-container">
+  <h2>Admin Registration</h2>
+  <div class="input-container">
+    <input type="email" id="regEmail" placeholder="Email" />
+  </div>
+  <div class="input-container">
+    <input type="password" id="regPassword" placeholder="Password" />
+    <button class="toggle-password" type="button" onclick="togglePassword()">
+      ▶
+    </button>
+  </div>
+  <div class="input-container">
+    <input type="text" id="regCompany" placeholder="Company Name" />
+  </div>
+  <div class="input-container">
+    <input type="text" id="regPasscode" placeholder="Customer Passcode" />
+  </div>
+  <button class="glow-btn" onclick="register()">Register</button>
+  <div class="small-link" onclick="window.location.href='admin.html'">Already have an account? Login</div>
+  <p id="regMessage" class="error-message"></p>
+</div>
+
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
@@ -37,32 +180,46 @@
   const db = getFirestore(app);
 
   window.register = async function () {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const companyName = document.getElementById("companyName").value;
-    const passcode = document.getElementById("customerPasscode").value;
-    const msg = document.getElementById("message");
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const company = document.getElementById("regCompany").value.trim();
+    const passcode = document.getElementById("regPasscode").value.trim();
+    const regMsg = document.getElementById("regMessage");
+
+    if (!email || !password || !company || !passcode) {
+      regMsg.innerText = "Please fill in all fields.";
+      return;
+    }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const snapshot = await getDocs(collection(db, "admins"));
+      const exists = snapshot.docs.some(doc => doc.data().passcode === passcode);
 
-      await setDoc(doc(db, "admins", user.uid), {
+      if (exists) {
+        regMsg.innerText = " This customer passcode is already used. Try another one.";
+        return;
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+
+      await setDoc(doc(db, "admins", uid), {
         email,
-        companyName,
+        company,
         passcode
       });
 
-      msg.textContent = "Account created successfully!";
-      msg.style.color = "green";
-
-      setTimeout(() => {
-        window.location.href = "admin.html";
-      }, 2000);
+      alert("Registered successfully! Please sign in.");
+      window.location.href = "admin.html";
     } catch (error) {
-      msg.textContent = "Error: " + error.message;
-      msg.style.color = "red";
+      console.error("Register error:", error.message);
+      regMsg.innerText = " Registration failed: " + error.message;
     }
+  };
+
+  window.togglePassword = function () {
+    const input = document.getElementById("regPassword");
+    input.type = input.type === "password" ? "text" : "password";
   };
 </script>
 
