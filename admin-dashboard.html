@@ -3,130 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ItemHolder Admin Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+  <title>Admin Dashboard - ItemHolder</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background: #0f172a;
-      font-family: 'Inter', sans-serif;
-      color: #f8fafc;
+      background: linear-gradient(to right, #0f172a, #1e293b);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .input {
-      @apply w-full border border-blue-500 bg-transparent text-white rounded-md px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400;
+    .neon-btn {
+      background-color: transparent;
+      border: 2px solid #00f7ff;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      color: #00f7ff;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
     }
-    .btn {
-      @apply px-6 py-3 text-base rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700;
+    .neon-btn:hover {
+      background-color: #00f7ff;
+      color: #0f172a;
+      box-shadow: 0 0 10px #00f7ff;
     }
-    table {
+    .neon-table {
+      border: 1px solid #00f7ff;
+      box-shadow: 0 0 5px #00f7ff;
       width: 100%;
-      border-collapse: collapse;
     }
-    th, td {
-      padding: 1rem;
-      border-bottom: 1px solid #334155;
+    .neon-table th, .neon-table td {
+      border: 1px solid #00f7ff;
+      padding: 12px;
+      text-align: center;
     }
-    thead {
-      background: #1e40af;
+    .product-input {
+      background-color: #1f2937;
+      color: white;
+      border: 1px solid #00f7ff;
+      padding: 6px;
+      border-radius: 6px;
     }
-    th {
-      color: #cbd5e1;
-      text-align: left;
-      font-weight: 600;
-      font-size: 1rem;
+    .compact-input {
+      max-width: 160px;
+      width: 100%;
     }
-    td {
+    .search-input {
       font-size: 0.95rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #00f7ff;
     }
   </style>
 </head>
-<body>
-  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:py-10">
-    <div class="w-full max-w-6xl bg-[#1e293b] rounded-xl p-6 sm:p-10 shadow-lg relative">
-      <h1 class="text-3xl sm:text-5xl font-bold text-blue-400 text-center mb-6 sm:mb-12">Admin Product Dashboard</h1>
+<body class="min-h-screen flex flex-col md:flex-row">
+  <div class="w-full md:w-64 bg-gray-900 p-4">
+    <h2 class="text-xl font-bold mb-6 text-center text-cyan-400">ItemHolder Admin</h2>
+    <nav class="space-y-3 text-center">
+      <button onclick="showSection('productsSection')" class="neon-btn w-full">Products</button>
+      <a href="debt.html" class="neon-btn w-full inline-block text-center">Debt</a>
+      <button onclick="logout()" class="neon-btn w-full">Logout</button>
+    </nav>
+  </div>
 
-      <!-- Top Buttons -->
-      <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center sm:justify-end absolute top-4 right-4">
-        <div id="passcode-display" class="text-yellow-300 text-sm sm:text-xl font-bold bg-slate-800 px-4 py-2 rounded-lg shadow-md text-center"></div>
-        <button onclick="openPasscodeModal()" class="bg-blue-700 hover:bg-blue-800 text-white text-sm sm:text-base py-2 px-4 rounded-lg">
-          Change Passcode
-        </button>
-        <a href="debt.html">
-          <button class="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base py-2 px-4 rounded-lg">
-            Manage Debt
-          </button>
-        </a>
+  <div class="flex-1 p-4">
+    <!-- Products Section -->
+    <div id="productsSection" class="section">
+      <div class="flex justify-between items-center">
+        <h3 class="text-2xl font-semibold mb-4 text-cyan-300">Your Products</h3>
+        <div id="totalProducts" class="text-lg text-cyan-300 font-bold"></div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h4 class="text-lg font-semibold mb-2 text-cyan-300">Add New Product</h4>
+        <div class="flex flex-wrap gap-3 items-center">
+          <input id="productName" type="text" placeholder="Product Name" class="product-input compact-input" />
+          <input id="productPrice" type="number" placeholder="Price" class="product-input compact-input" />
+          <input id="productCompany" type="text" placeholder="Company Name" class="product-input compact-input" />
+          <button onclick="addProduct()" class="neon-btn">Add Product</button>
+        </div>
+        <p id="addProductMsg" class="text-sm text-green-400 mt-2"></p>
       </div>
 
-      <!-- Summary -->
-      <div class="mt-24 sm:mt-28 mb-6">
-        <div class="bg-slate-800 p-4 sm:p-6 rounded-lg text-lg sm:text-2xl text-center">
-          <p class="text-blue-300 font-semibold">Total Products</p>
-          <p id="total-products" class="text-white font-bold text-2xl sm:text-4xl">0</p>
-        </div>
+      <div class="mb-4">
+        <input id="searchInput" type="text" placeholder="Search products..." oninput="filterProducts()" class="search-input w-full text-black" />
       </div>
 
-      <!-- Add Product Form -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 mb-6">
-        <div>
-          <label class="block text-blue-200 mb-2 text-base sm:text-xl">Product Name</label>
-          <input id="product-name" type="text" class="input" placeholder="Smartphone">
-        </div>
-        <div>
-          <label class="block text-blue-200 mb-2 text-base sm:text-xl">Cost (₹)</label>
-          <input id="product-cost" type="number" class="input" placeholder="15000">
-        </div>
-        <div>
-          <label class="block text-blue-200 mb-2 text-base sm:text-xl">Company</label>
-          <input id="product-company" type="text" class="input" placeholder="Realme">
-        </div>
-      </div>
-
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <button onclick="addProduct()" class="btn w-full sm:w-auto">Add Product</button>
-        <input type="text" id="search-bar" oninput="searchProducts()" placeholder="Search products..." class="input w-full sm:w-[400px]"/>
-      </div>
-
-      <!-- Product Table -->
-      <div class="overflow-x-auto bg-slate-800 rounded-lg">
-        <table>
-          <thead>
+      <div class="overflow-x-auto rounded-lg border border-cyan-400 shadow-md mt-6">
+        <table class="neon-table text-sm text-white">
+          <thead class="text-xs uppercase text-white">
             <tr>
               <th>Product Name</th>
-              <th>Cost (₹)</th>
+              <th>Price</th>
               <th>Company</th>
-              <th class="text-center">Actions</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="product-list" class="bg-slate-800">
-            <!-- Product rows will be injected here -->
-          </tbody>
+          <tbody id="productTable" class="bg-gray-800 divide-y divide-cyan-400"></tbody>
         </table>
+        <p id="noProductsMsg" class="text-center text-gray-400 mt-4 hidden"></p>
+      </div>
+
+      <div class="mt-10">
+        <h3 class="text-2xl font-semibold mb-4 text-cyan-300">Change Customer Passcode</h3>
+        <form class="space-y-3 bg-gray-800 p-4 rounded-lg">
+          <input type="password" id="newPasscode" placeholder="Enter new passcode" class="w-full p-2 rounded text-black" />
+          <button type="button" onclick="updatePasscode()" class="neon-btn w-full">Update Passcode</button>
+          <p id="passcodeMsg" class="text-sm text-green-400 mt-2"></p>
+          <p id="currentPasscode" class="text-sm text-yellow-400"></p>
+        </form>
       </div>
     </div>
   </div>
 
-  <!-- Passcode Modal -->
-  <div id="passcodeModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl p-6 w-[90%] max-w-md text-black">
-      <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center">Change Customer Passcode</h2>
-      <input id="new-passcode" type="text" placeholder="Enter new passcode" class="w-full border border-gray-400 rounded-md px-4 py-2 mb-4">
-      <div class="flex gap-4">
-        <button onclick="closePasscodeModal()" class="w-full py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-        <button onclick="updatePasscode()" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Update</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, getDoc, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
       authDomain: "itemholder-62429.firebaseapp.com",
@@ -136,124 +128,123 @@
       appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const userId = localStorage.getItem("userId");
 
-    let currentAdminUid = null;
-    let allProducts = [];
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
 
-    onAuthStateChanged(auth, async (user) => {
+    function logout() {
+      auth.signOut().then(() => {
+        localStorage.clear();
+        window.location.href = "admin.html";
+      });
+    }
+
+    function addProduct() {
+      const name = document.getElementById('productName').value.trim();
+      const price = document.getElementById('productPrice').value.trim();
+      const company = document.getElementById('productCompany').value.trim();
+      if (!name || !price || !company) return;
+      db.collection("products").add({ name, price, company, userId }).then(() => {
+        document.getElementById('addProductMsg').innerText = "Product added!";
+        document.getElementById('productName').value = "";
+        document.getElementById('productPrice').value = "";
+        document.getElementById('productCompany').value = "";
+        fetchProducts();
+      });
+    }
+
+    function fetchProducts() {
+      db.collection("products").where("userId", "==", userId).get().then(snapshot => {
+        const table = document.getElementById('productTable');
+        table.innerHTML = "";
+        let total = 0;
+        if (snapshot.empty) {
+          document.getElementById("noProductsMsg").classList.remove("hidden");
+        } else {
+          document.getElementById("noProductsMsg").classList.add("hidden");
+          snapshot.forEach(doc => {
+            total++;
+            const p = doc.data();
+            table.innerHTML += `
+              <tr id="row-${doc.id}">
+                <td><span id="name-${doc.id}">${p.name}</span></td>
+                <td><span id="price-${doc.id}">${p.price}</span></td>
+                <td><span id="company-${doc.id}">${p.company}</span></td>
+                <td>
+                  <button onclick="enableEdit('${doc.id}')" class="text-yellow-400 hover:text-yellow-600">Edit</button>
+                  <button onclick="deleteProduct('${doc.id}')" class="text-red-400 hover:text-red-600 ml-2">Delete</button>
+                </td>
+              </tr>`;
+          });
+        }
+        document.getElementById("totalProducts").innerText = `Total Products: ${total}`;
+      });
+    }
+
+    function enableEdit(id) {
+      const name = document.getElementById(`name-${id}`).textContent;
+      const price = document.getElementById(`price-${id}`).textContent;
+      const company = document.getElementById(`company-${id}`).textContent;
+      const row = document.getElementById(`row-${id}`);
+      row.innerHTML = `
+        <td><input id="edit-name-${id}" class="product-input w-full text-center" value="${name}" /></td>
+        <td><input id="edit-price-${id}" class="product-input w-full text-center" value="${price}" /></td>
+        <td><input id="edit-company-${id}" class="product-input w-full text-center" value="${company}" /></td>
+        <td>
+          <button onclick="saveEdit('${id}')" class="text-green-400 hover:text-green-600">Save</button>
+          <button onclick="fetchProducts()" class="text-gray-400 hover:text-gray-600 ml-2">Cancel</button>
+        </td>`;
+    }
+
+    function saveEdit(id) {
+      const name = document.getElementById(`edit-name-${id}`).value.trim();
+      const price = document.getElementById(`edit-price-${id}`).value.trim();
+      const company = document.getElementById(`edit-company-${id}`).value.trim();
+      db.collection("products").doc(id).update({ name, price, company }).then(() => fetchProducts());
+    }
+
+    function deleteProduct(id) {
+      db.collection("products").doc(id).delete().then(() => fetchProducts());
+    }
+
+    function updatePasscode() {
+      const newPasscode = document.getElementById('newPasscode').value.trim();
+      if (!newPasscode) return;
+      db.collection("admins").doc(userId).update({ passcode: newPasscode }).then(() => {
+        document.getElementById('passcodeMsg').innerText = "Passcode updated!";
+        document.getElementById('currentPasscode').innerText = `Current Passcode: ${newPasscode}`;
+      });
+    }
+
+    function filterProducts() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#productTable tr');
+      rows.forEach(row => {
+        const name = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
+        const price = row.querySelector("td:nth-child(2)").textContent.toLowerCase();
+        const company = row.querySelector("td:nth-child(3)").textContent.toLowerCase();
+        row.style.display = (name.includes(keyword) || price.includes(keyword) || company.includes(keyword)) ? "" : "none";
+      });
+    }
+
+    auth.onAuthStateChanged(user => {
       if (user) {
-        currentAdminUid = user.uid;
-        await loadPasscode();
-        await loadProducts();
+        localStorage.setItem("userId", user.uid);
+        fetchProducts();
+        db.collection("admins").doc(user.uid).get().then(doc => {
+          const pass = doc.data()?.passcode;
+          if (pass) document.getElementById('currentPasscode').innerText = `Current Passcode: ${pass}`;
+        });
       } else {
-        alert("You are not logged in. Redirecting...");
         window.location.href = "admin.html";
       }
     });
-
-    async function loadPasscode() {
-      const docRef = doc(db, "admins", currentAdminUid);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("passcode-display").textContent = `Passcode: ${data.passcode || "Not set"}`;
-      }
-    }
-
-    window.openPasscodeModal = function () {
-      document.getElementById("passcodeModal").style.display = "flex";
-    };
-
-    window.closePasscodeModal = function () {
-      document.getElementById("passcodeModal").style.display = "none";
-    };
-
-    window.updatePasscode = async function () {
-      const newPasscode = document.getElementById("new-passcode").value.trim();
-      if (!newPasscode) return alert("Please enter a new passcode.");
-      try {
-        const ref = doc(db, "admins", currentAdminUid);
-        await updateDoc(ref, { passcode: newPasscode });
-        document.getElementById("passcode-display").textContent = `Passcode: ${newPasscode}`;
-        closePasscodeModal();
-        alert("Passcode updated successfully!");
-      } catch (err) {
-        console.error("Passcode update error:", err);
-        alert("Failed to update passcode.");
-      }
-    };
-
-    window.addProduct = async function () {
-      const name = document.getElementById("product-name").value.trim();
-      const cost = document.getElementById("product-cost").value.trim();
-      const company = document.getElementById("product-company").value.trim();
-      if (!name || !cost || !company) return alert("Please fill in all fields.");
-      await addDoc(collection(db, "products"), {
-        name, cost, company,
-        adminUid: currentAdminUid,
-        createdAt: serverTimestamp()
-      });
-      document.getElementById("product-name").value = "";
-      document.getElementById("product-cost").value = "";
-      document.getElementById("product-company").value = "";
-      loadProducts();
-    }
-
-    async function loadProducts() {
-      const q = query(collection(db, "products"), where("adminUid", "==", currentAdminUid));
-      const snapshot = await getDocs(q);
-      allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      displayProducts(allProducts);
-      document.getElementById("total-products").textContent = allProducts.length;
-    }
-
-    function displayProducts(products) {
-      const list = document.getElementById("product-list");
-      list.innerHTML = "";
-      products.forEach(data => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${data.name}</td>
-          <td>₹${data.cost}</td>
-          <td>${data.company}</td>
-          <td class="text-center">
-            <button onclick="editProduct('${data.id}', '${data.name}', '${data.cost}', '${data.company}')" class="btn bg-yellow-400 text-black hover:bg-yellow-500">Edit</button>
-            <button onclick="deleteProduct('${data.id}')" class="btn bg-red-600 text-white hover:bg-red-700 ml-2">Delete</button>
-          </td>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    window.searchProducts = function () {
-      const term = document.getElementById("search-bar").value.toLowerCase();
-      const filtered = allProducts.filter(p =>
-        p.name.toLowerCase().includes(term) || p.company.toLowerCase().includes(term)
-      );
-      displayProducts(filtered);
-    }
-
-    window.deleteProduct = async function (id) {
-      await deleteDoc(doc(db, "products", id));
-      loadProducts();
-    }
-
-    window.editProduct = async function (id, currentName, currentCost, currentCompany) {
-      const newName = prompt("Edit Product Name:", currentName);
-      const newCost = prompt("Edit Product Cost:", currentCost);
-      const newCompany = prompt("Edit Product Company:", currentCompany);
-      if (newName && newCost && newCompany) {
-        await updateDoc(doc(db, "products", id), {
-          name: newName,
-          cost: newCost,
-          company: newCompany
-        });
-        loadProducts();
-      }
-    }
   </script>
 </body>
 </html>
