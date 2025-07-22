@@ -4,70 +4,217 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Login - ItemHolder</title>
-  <link rel="stylesheet" href="admin.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #0f0f0f, #1a1a1a);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0, 255, 208, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #00ffd0;
+      text-shadow: 0 0 10px #00ffd0aa;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+      margin-bottom: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #222;
+      color: #fff;
+      font-size: 1rem;
+      transition: 0.3s ease;
+    }
+
+    .eye-icon {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 1rem;
+      color: #bbb;
+      user-select: none;
+    }
+
+    .glow-btn {
+      background-color: transparent;
+      border: 2px solid #00ffd0;
+      color: #00ffd0;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .glow-btn::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #00ffd0, #00ffa2, #00ffd0);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      filter: blur(10px);
+    }
+
+    .glow-btn:hover::before {
+      opacity: 1;
+    }
+
+    .glow-btn:hover {
+      background-color: #00ffd0;
+      color: #000;
+      box-shadow: 0 0 15px #00ffd0;
+    }
+
+    .small-link {
+      color: #00ffd0;
+      text-align: center;
+      display: block;
+      font-size: 0.9rem;
+      margin-top: -0.5rem;
+      margin-bottom: 1rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .error-message {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #f87171;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-  <div class="login-container">
-    <h1>Admin Login</h1>
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button onclick="login()">Login</button>
 
-    <p style="text-align:center; margin-top: 10px;">
-      <a href="#" onclick="resetPassword()" style="color: #007BFF; text-decoration: underline;">Forgot Password?</a>
-    </p>
+<div class="login-container">
+  <h2>Admin Login</h2>
 
-    <p id="message"></p>
-    <a href="admin-register.html">Don't have an account? Register here</a>
+  <input type="email" id="email" placeholder="Email" />
+
+  <div class="input-wrapper">
+    <input type="password" id="password" placeholder="Password" />
+    <span class="eye-icon" onclick="togglePassword(this)">▶</span>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      sendPasswordResetEmail
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <button class="glow-btn" onclick="login()">Login</button>
+  <div class="small-link" onclick="resetPassword()">Forgot Password?</div>
+  <div class="small-link" onclick="window.location.href='admin-register.html'">Don't have an account? Register</div>
+  <p id="message" class="error-message"></p>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
-      authDomain: "itemholder-62429.firebaseapp.com",
-      projectId: "itemholder-62429",
-      storageBucket: "itemholder-62429.appspot.com",
-      messagingSenderId: "609823818657",
-      appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
-    };
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
+    authDomain: "itemholder-62429.firebaseapp.com",
+    projectId: "itemholder-62429",
+    storageBucket: "itemholder-62429.appspot.com",
+    messagingSenderId: "609823818657",
+    appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
+  };
 
-    window.login = function () {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          localStorage.setItem("adminUID", user.uid);
-          window.location.href = "admin-dashboard.html";
-        })
-        .catch((error) => {
-          alert("Login failed: " + error.message);
-        });
-    };
+  window.login = function () {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("message");
+    msg.innerText = "";
 
-    window.resetPassword = function () {
-      const email = prompt("Enter your registered email:");
-      if (email) {
-        sendPasswordResetEmail(auth, email)
-          .then(() => {
-            alert("Reset link sent! Check your email.");
-          })
-          .catch((error) => {
-            alert("Error: " + error.message);
-          });
-      }
-    };
-  </script>
+    if (!email || !password) {
+      msg.innerText = "Please enter both email and password.";
+      return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        localStorage.setItem("adminUID", userCredential.user.uid);
+        window.location.href = "admin-dashboard.html";
+      })
+      .catch((error) => {
+        msg.innerText = "Login failed: " + error.message;
+      });
+  };
+
+  window.resetPassword = function () {
+    const email = document.getElementById("email").value.trim();
+    const msg = document.getElementById("message");
+    if (!email) {
+      msg.innerText = "Please enter your email to reset password.";
+      return;
+    }
+
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        msg.innerText = "Reset link sent! Check your email spam.";
+        msg.style.color = "#00ffd0";
+      })
+      .catch((error) => {
+        msg.innerText = "Error: " + error.message;
+      });
+  };
+
+  window.togglePassword = function (icon) {
+    const passwordInput = document.getElementById("password");
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      icon.textContent = "▶";
+    } else {
+      passwordInput.type = "password";
+      icon.textContent = "▶";
+    }
+  };
+</script>
+
 </body>
 </html>
