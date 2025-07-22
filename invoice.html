@@ -1,241 +1,208 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Invoice Generator</title>
+  <title>Invoice - ItemHolder</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    body {
-      background: #0f172a;
-      font-family: 'Inter', sans-serif;
-      color: #f8fafc;
-    }
-    .card {
-      background: #1e293b;
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-      padding: 2rem;
-    }
-    table {
-      width: 100%;
-      margin-top: 1.5rem;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 1.2rem;
-      border-bottom: 1px solid #334155;
-    }
-    thead {
-      background-color: #1e40af;
-    }
-    th {
-      color: #cbd5e1;
-      font-size: 1.4rem;
-      text-align: left;
-    }
-    td {
-      font-size: 1.2rem;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; }
+    .neon-btn { border: 2px solid #00f7ff; padding: 8px 16px; font-weight: bold; border-radius: 8px; color: #00f7ff; background: transparent; transition:0.3s; text-align:center; }
+    .neon-btn:hover { background: #00f7ff; color: #0f172a; box-shadow: 0 0 10px #00f7ff; }
+    .neon-table { border:1px solid #00f7ff; box-shadow:0 0 5px #00f7ff; width:100%; }
+    .neon-table th, .neon-table td { border:1px solid #00f7ff; padding:10px; text-align:center; }
+    .product-input { background: #1f2937; color: white; border:1px solid #00f7ff; padding:6px; border-radius:6px; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-6 bg-slate-900 text-white">
-  <div class="w-full max-w-5xl card mt-12">
-    <h1 class="text-4xl text-center font-bold text-blue-400 mb-8">Invoice Generator</h1>
+<body class="min-h-screen flex flex-col md:flex-row">
 
-    <!-- 🔍 Search bar and select button -->
-    <div class="flex flex-col md:flex-row gap-4 mb-6">
-      <input id="search-input" type="text" placeholder="Search product..." class="p-5 text-xl rounded-md text-black w-full md:w-[300px]">
-      <button onclick="searchAndSelect()" class="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-md text-black text-lg">
-        Select
-      </button>
-    </div>
+  <!-- Sidebar -->
+  <div class="w-full md:w-64 bg-gray-900 p-4">
+    <h2 class="text-xl font-bold mb-6 text-center text-cyan-400">ItemHolder</h2>
+    <nav class="space-y-3 text-center">
+      <a href="customer-view.html" class="neon-btn w-full">View Products</a>
+      <a href="#" class="neon-btn w-full">Invoice</a>
+      <a href="customer-login.html" class="neon-btn w-full">Logout</a>
+    </nav>
+  </div>
 
+  <!-- Main Content -->
+  <div class="flex-1 p-4">
+    <h1 class="text-2xl font-bold text-cyan-300 mb-4">Generate Invoice</h1>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <select id="product-select" class="p-5 text-black text-xl rounded-md">
-        <option value="">Select a product</option>
-      </select>
-      <input id="product-cost" type="text" placeholder="Cost" class="p-5 text-xl rounded-md text-black" readonly>
-      <input id="product-company" type="text" placeholder="Company" class="p-5 text-xl rounded-md text-black" readonly>
-      <input id="product-qty" type="number" placeholder="Qty" class="p-5 text-xl rounded-md text-black">
+      <input id="search-input" type="text" placeholder="Search product..." class="product-input w-full" />
+      <button onclick="searchAndSelect()" class="neon-btn">Select</button>
+      <select id="product-select" class="product-input"><option value="">Select a product</option></select>
+      <input id="product-qty" type="number" placeholder="Qty" class="product-input" />
     </div>
-
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input id="product-price" type="text" placeholder="Price" class="product-input" />
+      <input id="product-company" type="text" placeholder="Company" class="product-input" />
+    </div>
     <div class="flex justify-end mb-6">
-      <button onclick="addToInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 text-lg rounded-md"> Add Item</button>
+      <button onclick="addToInvoice()" class="neon-btn">Add Item</button>
     </div>
-
-    <div id="invoice-wrapper" class="overflow-x-auto border border-slate-600 rounded-lg bg-white text-black">
-      <table id="invoice-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Cost</th>
-            <th>Company</th>
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Action</th>
-          </tr>
+    <div class="overflow-x-auto rounded-lg border border-cyan-400 shadow-md mb-6">
+      <table id="invoice-table" class="neon-table text-white text-sm">
+        <thead class="bg-blue-800">
+          <tr><th>Product</th><th>Price</th><th>Company</th><th>Qty</th><th>Total</th><th>Action</th></tr>
         </thead>
-        <tbody id="invoice-body" class="bg-white">
-          <!-- Items go here -->
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="4" class="text-right font-bold text-lg">Grand Total:</td>
-            <td id="grand-total-cell" class="font-bold text-lg">0</td>
-            <td></td>
-          </tr>
-        </tfoot>
+        <tbody id="invoice-body" class="bg-gray-800"></tbody>
+        <tfoot><tr><td colspan="4" class="text-right font-bold">Grand Total:</td><td id="grand-total-cell" class="font-bold text-cyan-400">0</td><td></td></tr></tfoot>
       </table>
     </div>
-
-    <div class="flex justify-between items-center mt-6">
-      <h2 class="text-2xl font-semibold">Total: <span id="grand-total">0</span></h2>
-      <button onclick="downloadPDF()" class="bg-green-600 hover:bg-green-700 px-6 py-3 text-white text-lg rounded-md">
-        Download Invoice
-      </button>
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Total: <span id="grand-total">0</span></h2>
+      <button onclick="downloadPDF()" class="neon-btn">Download PDF</button>
     </div>
   </div>
 
+  <!-- Firebase + Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs, query, where
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const firebaseConfig = {
+    const app = initializeApp({
       apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
       authDomain: "itemholder-62429.firebaseapp.com",
       projectId: "itemholder-62429",
       storageBucket: "itemholder-62429.appspot.com",
       messagingSenderId: "609823818657",
       appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
-    };
+    });
 
-    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const passcode = localStorage.getItem("customerPasscode");
-    const productSelect = document.getElementById("product-select");
-    const costInput = document.getElementById("product-cost");
-    const companyInput = document.getElementById("product-company");
-    const qtyInput = document.getElementById("product-qty");
-    const invoiceBody = document.getElementById("invoice-body");
-    const grandTotalSpan = document.getElementById("grand-total");
-    const grandTotalCell = document.getElementById("grand-total-cell");
-
-    let products = [];
-    let invoiceItems = [];
 
     if (!passcode) {
       alert("Passcode not found. Redirecting...");
       window.location.href = "customer-login.html";
     }
 
-    async function loadProducts() {
-      const adminQuery = query(collection(db, "admins"), where("passcode", "==", passcode));
-      const adminSnap = await getDocs(adminQuery);
+    let products = [], invoiceItems = [];
+    const priceInput = document.getElementById("product-price");
+    const companyInput = document.getElementById("product-company");
+    const productSelect = document.getElementById("product-select");
+    const searchInput = document.getElementById("search-input");
+    const qtyInput = document.getElementById("product-qty");
+    const invoiceBody = document.getElementById("invoice-body");
+    const grandTotalSpan = document.getElementById("grand-total");
+    const grandTotalCell = document.getElementById("grand-total-cell");
 
+    async function loadProducts() {
+      const adminSnap = await getDocs(query(collection(db, "admins"), where("passcode", "==", passcode)));
       if (adminSnap.empty) {
         alert("Invalid passcode.");
         return;
       }
 
       const adminId = adminSnap.docs[0].id;
-      const productQuery = query(collection(db, "products"), where("adminUid", "==", adminId));
-      const productSnap = await getDocs(productQuery);
 
-      products = productSnap.docs.map(doc => doc.data());
-      for (const p of products) {
-        const opt = document.createElement("option");
-        opt.value = p.name;
-        opt.textContent = p.name;
-        productSelect.appendChild(opt);
+      let prodSnap = await getDocs(query(collection(db, "products"), where("adminUid", "==", adminId)));
+      if (prodSnap.empty) {
+        prodSnap = await getDocs(query(collection(db, "products"), where("userId", "==", adminId)));
       }
-    }
 
-    productSelect.addEventListener("change", () => {
-      const selected = products.find(p => p.name === productSelect.value);
-      if (selected) {
-        costInput.value = selected.cost;
-        companyInput.value = selected.company;
-      } else {
-        costInput.value = "";
-        companyInput.value = "";
-      }
-    });
+      products = prodSnap.docs.map(doc => doc.data());
 
-    window.searchAndSelect = function () {
-      const input = document.getElementById("search-input").value.toLowerCase();
-      const match = products.find(p => p.name.toLowerCase().includes(input));
-      if (match) {
-        productSelect.value = match.name;
-        costInput.value = match.cost;
-        companyInput.value = match.company;
-      } else {
-        alert("Product not found.");
-      }
-    };
-
-    window.addToInvoice = function () {
-      const name = productSelect.value;
-      const cost = parseFloat(costInput.value);
-      const company = companyInput.value;
-      const qty = parseInt(qtyInput.value);
-
-      if (!name || isNaN(cost) || !company || isNaN(qty)) {
-        alert("Fill all fields.");
+      if (products.length === 0) {
+        alert("No products found for this admin.");
         return;
       }
 
-      const total = cost * qty;
-      invoiceItems.push({ name, cost, company, qty, total });
+      products.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = JSON.stringify(p);
+        opt.textContent = `${p.name} - ${p.company}`;
+        productSelect.appendChild(opt);
+      });
+    }
+
+    productSelect.addEventListener("change", () => {
+      const selected = productSelect.value;
+      if (selected) {
+        const data = JSON.parse(selected);
+        priceInput.value = data.price || data.cost || "";
+        companyInput.value = data.company || "";
+        searchInput.value = data.name || "";
+      }
+    });
+
+    window.searchAndSelect = () => {
+      const val = searchInput.value.toLowerCase();
+      const sel = products.find(p => p.name.toLowerCase().includes(val));
+      if (!sel) return alert("Product not found");
+      productSelect.value = JSON.stringify(sel);
+      priceInput.value = sel.price || sel.cost || "";
+      companyInput.value = sel.company || "";
+    };
+
+    window.addToInvoice = () => {
+      const selected = productSelect.value;
+      let name = "", price = 0, company = "";
+
+      if (selected) {
+        const data = JSON.parse(selected);
+        name = data.name;
+        price = parseFloat(priceInput.value);
+        company = data.company;
+      } else {
+        name = searchInput.value.trim();
+        price = parseFloat(priceInput.value);
+        company = companyInput.value.trim();
+      }
+
+      const qty = parseInt(qtyInput.value);
+      if (!name || isNaN(price) || !company || isNaN(qty)) {
+        alert("Fill all fields");
+        return;
+      }
+
+      const total = price * qty;
+      invoiceItems.push({ name, price, company, qty, total });
       renderInvoice();
     };
 
     function renderInvoice() {
       invoiceBody.innerHTML = "";
-      let grandTotal = 0;
-
+      let sum = 0;
       invoiceItems.forEach((item, i) => {
-        grandTotal += item.total;
-        invoiceBody.innerHTML += `
+        sum += item.total;
+        invoiceBody.insertAdjacentHTML("beforeend", `
           <tr>
             <td>${item.name}</td>
-            <td>${item.cost}</td>
+            <td>${item.price}</td>
             <td>${item.company}</td>
             <td>${item.qty}</td>
             <td>${item.total}</td>
             <td><button onclick="removeItem(${i})" class="text-red-400 hover:underline">Delete</button></td>
-          </tr>`;
+          </tr>`);
       });
-
-      grandTotalSpan.textContent = grandTotal.toFixed(2);
-      grandTotalCell.textContent = `${grandTotal.toFixed(2)}`;
+      grandTotalSpan.textContent = sum.toFixed(2);
+      grandTotalCell.textContent = sum.toFixed(2);
     }
 
-    window.removeItem = function (index) {
-      invoiceItems.splice(index, 1);
+    window.removeItem = i => {
+      invoiceItems.splice(i, 1);
       renderInvoice();
     };
 
-    window.downloadPDF = function () {
-      const table = document.getElementById("invoice-table");
-
-      const clone = table.cloneNode(true);
+    window.downloadPDF = () => {
+      const table = document.getElementById("invoice-table").cloneNode(true);
+      table.querySelectorAll("td, th").forEach(td => {
+        td.style = "border:1px solid #000; background:#fff; color:#000; padding:6px;";
+      });
       const wrapper = document.createElement("div");
-      wrapper.appendChild(clone);
-
-      wrapper.style.padding = "20px";
-      wrapper.style.color = "#000";
-      wrapper.style.fontSize = "14px";
-      wrapper.style.background = "#fff";
-
+      wrapper.style = "padding:20px; background:#fff;";
+      const h = document.createElement("h2");
+      h.textContent = "Invoice";
+      Object.assign(h.style, { textAlign: "center", marginBottom: "20px", fontSize: "18px", fontWeight: "bold" });
+      wrapper.append(h, table);
       html2pdf().set({
         margin: 0.5,
         filename: "invoice.pdf",
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
       }).from(wrapper).save();
