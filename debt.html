@@ -1,65 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Debt Manager</title>
+  <title>Debt Manager - ItemHolder</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background: #0f172a;
-      font-family: 'Inter', sans-serif;
-      color: #f8fafc;
+      background: linear-gradient(to right, #0f172a, #1e293b);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .card {
-      background: #1e293b;
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-      padding: 2rem;
+    .neon-btn {
+      border: 2px solid #00f7ff;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      color: #00f7ff;
+      transition: 0.3s;
+      background: transparent;
     }
-    th, td {
-      padding: 1.5rem;
-      border-bottom: 1px solid #334155;
+    .neon-btn:hover {
+      background-color: #00f7ff;
+      color: #0f172a;
+      box-shadow: 0 0 10px #00f7ff;
     }
-    thead {
-      background: #1e40af;
+    .neon-table {
+      border: 1px solid #00f7ff;
+      box-shadow: 0 0 5px #00f7ff;
+      width: 100%;
     }
-    th {
-      color: #cbd5e1;
-      font-weight: 600;
-      font-size: 1.6rem;
-      text-align: left;
+    .neon-table th, .neon-table td {
+      border: 1px solid #00f7ff;
+      padding: 10px;
+      text-align: center;
     }
-    td {
-      font-size: 1.4rem;
+    .product-input {
+      background-color: #1f2937;
+      color: white;
+      border: 1px solid #00f7ff;
+      padding: 6px;
+      border-radius: 6px;
+    }
+    .search-input {
+      padding: 10px;
+      border: 2px solid #00f7ff;
+      border-radius: 8px;
     }
   </style>
 </head>
-<body class="flex flex-col items-center justify-start p-6 min-h-screen bg-slate-900">
+<body class="min-h-screen flex flex-col md:flex-row">
 
-  <div class="w-full max-w-7xl card mt-12">
-    <h1 class="text-4xl font-bold text-blue-400 text-center mb-10">Debt Records</h1>
+  <!-- Sidebar -->
+  <div class="w-full md:w-64 bg-gray-900 p-4">
+    <h2 class="text-xl font-bold mb-6 text-center text-cyan-400">ItemHolder Admin</h2>
+    <nav class="space-y-3 text-center">
+      <a href="admin-dashboard.html" class="neon-btn w-full">Products</a>
+      <a href="debt.html" class="neon-btn w-full">Debt</a>
+      <a href="index.html" class="neon-btn w-full">Logout</a>
+    </nav>
+  </div>
 
-    <!-- Input Section -->
+  <!-- Main Content -->
+  <div class="flex-1 p-4">
+    <h1 class="text-2xl font-bold text-cyan-300 mb-4">Debt Manager</h1>
+
+    <!-- Form -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <input id="debt-name" type="text" placeholder="Name" class="px-4 py-3 text-lg text-black rounded-md">
-      <input id="debt-took" type="number" placeholder="Money Took" class="px-4 py-3 text-lg text-black rounded-md">
-      <input id="debt-paid" type="number" placeholder="Money Paid" class="px-4 py-3 text-lg text-black rounded-md">
-      <input id="debt-left" type="number" placeholder="Money Left" class="px-4 py-3 text-lg text-black rounded-md">
-      <input id="debt-contact" type="text" placeholder="Contact" class="px-4 py-3 text-lg text-black rounded-md">
-      <input id="debt-reason" type="text" placeholder="Reason" class="px-4 py-3 text-lg text-black rounded-md">
+      <input id="debt-name" type="text" placeholder="Name" class="product-input"/>
+      <input id="debt-took" type="number" placeholder="Money Took" class="product-input"/>
+      <input id="debt-paid" type="number" placeholder="Money Paid" class="product-input"/>
+      <input id="debt-left" type="number" placeholder="Money Left" class="product-input"/>
+      <input id="debt-contact" type="text" placeholder="Contact" class="product-input"/>
+      <input id="debt-reason" type="text" placeholder="Reason" class="product-input"/>
     </div>
-    <div class="flex justify-end mb-6">
-      <button onclick="addDebt()" class="bg-blue-700 hover:bg-blue-800 px-6 py-3 text-white text-lg rounded-md"> Add Debt</button>
+    <button onclick="addDebt()" class="neon-btn mb-6">Add Debt</button>
+
+    <!-- Search -->
+    <div class="mb-6 flex justify-center">
+      <input id="searchInput" type="text" placeholder="Search..." class="search-input max-w-xs w-full text-black" oninput="filterDebts()" />
     </div>
 
-    <!-- Table Section -->
-    <div class="overflow-x-auto border border-slate-600 rounded-lg">
-      <table class="min-w-full">
+    <!-- Table -->
+    <h3 class="text-lg mb-2 text-cyan-300">Debt List</h3>
+    <div class="overflow-x-auto rounded-lg border border-cyan-400 shadow-md">
+      <table class="neon-table text-sm text-white">
         <thead>
           <tr>
             <th>Name</th>
-            <th>Money Took</th>
+            <th>Took</th>
             <th>Paid</th>
             <th>Left</th>
             <th>Contact</th>
@@ -67,22 +99,12 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="debt-list" class="bg-slate-800">
-          <!-- Debt rows inserted here -->
-        </tbody>
+        <tbody id="debt-list" class="bg-gray-800 divide-y divide-cyan-400"></tbody>
       </table>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyCwqMxBpCCsVDap8nMC8Sq4Tl1bR-_YATs",
       authDomain: "itemholder-62429.firebaseapp.com",
@@ -92,13 +114,12 @@
       appId: "1:609823818657:web:60c279b374cb1ee3d4c1e0"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth();
-
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
     let currentUser = null;
 
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
         await loadDebts();
@@ -111,28 +132,24 @@
     async function loadDebts() {
       const tbody = document.getElementById("debt-list");
       tbody.innerHTML = "";
-
-      const q = query(collection(db, "debts"), where("adminUid", "==", currentUser.uid));
-      const snapshot = await getDocs(q);
-
+      const snapshot = await db.collection("debts").where("adminUid", "==", currentUser.uid).get();
       snapshot.forEach(docSnap => {
         const d = docSnap.data();
         const id = docSnap.id;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${d.name}</td>
-          <td>${d.took}</td>
-          <td>${d.paid}</td>
-          <td>${d.left}</td>
-          <td>${d.contact}</td>
-          <td>${d.reason}</td>
-          <td>
-            <button onclick="editDebt('${id}', ${d.took})" class="text-blue-400 hover:underline mr-2">Edit</button>
-            <button onclick="deleteDebt('${id}')" class="text-red-400 hover:underline">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(row);
+        const row = `
+          <tr>
+            <td>${d.name}</td>
+            <td>${d.took}</td>
+            <td>${d.paid}</td>
+            <td>${d.left}</td>
+            <td>${d.contact}</td>
+            <td>${d.reason}</td>
+            <td>
+              <button onclick="editDebt('${id}', '${d.name}', ${d.took}, ${d.paid}, '${d.contact}')" class="text-yellow-400 hover:underline">Edit</button>
+              <button onclick="deleteDebt('${id}')" class="text-red-400 hover:underline ml-2">Delete</button>
+            </td>
+          </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
       });
     }
 
@@ -149,42 +166,39 @@
         return;
       }
 
-      try {
-        await addDoc(collection(db, "debts"), {
-          adminUid: currentUser.uid,
-          name, took, paid, left, contact, reason
-        });
-
-        // Clear form
-        document.getElementById("debt-name").value = "";
-        document.getElementById("debt-took").value = "";
-        document.getElementById("debt-paid").value = "";
-        document.getElementById("debt-left").value = "";
-        document.getElementById("debt-contact").value = "";
-        document.getElementById("debt-reason").value = "";
-
-        await loadDebts();
-      } catch (error) {
-        console.error("Error adding debt:", error);
-        alert("Error saving debt. See console for details.");
-      }
-    };
-
-    window.deleteDebt = async function (id) {
-      await deleteDoc(doc(db, "debts", id));
+      await db.collection("debts").add({ adminUid: currentUser.uid, name, took, paid, left, contact, reason });
+      ["name", "took", "paid", "left", "contact", "reason"].forEach(id => {
+        document.getElementById("debt-" + id).value = "";
+      });
       await loadDebts();
     };
 
-    window.editDebt = async function (id, tookAmount) {
-      const newPaid = prompt("Enter new paid amount:");
-      if (newPaid !== null && !isNaN(newPaid)) {
-        const newLeft = tookAmount - parseInt(newPaid);
-        await updateDoc(doc(db, "debts", id), {
-          paid: parseInt(newPaid),
-          left: newLeft
-        });
-        await loadDebts();
-      }
+    window.deleteDebt = async function (id) {
+      await db.collection("debts").doc(id).delete();
+      await loadDebts();
+    };
+
+    window.editDebt = async function (id, currentName, currentTook, currentPaid, currentContact) {
+      const name = prompt("Edit Name:", currentName);
+      if (!name) return;
+      const took = prompt("Edit Took:", currentTook);
+      if (!took || isNaN(took)) return;
+      const paid = prompt("Edit Paid:", currentPaid);
+      if (!paid || isNaN(paid)) return;
+      const contact = prompt("Edit Contact:", currentContact);
+      if (!contact) return;
+      const left = parseInt(took) - parseInt(paid);
+
+      await db.collection("debts").doc(id).update({ name, took: parseInt(took), paid: parseInt(paid), left, contact });
+      await loadDebts();
+    };
+
+    window.filterDebts = function () {
+      const keyword = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#debt-list tr");
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+      });
     };
   </script>
 </body>
