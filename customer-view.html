@@ -126,8 +126,6 @@
     let allProducts = [];
 
     async function fetchProducts() {
-      console.log("🔐 Passcode:", passcode);
-
       const adminQuery = query(collection(db, "admins"), where("passcode", "==", passcode));
       const adminSnap = await getDocs(adminQuery);
 
@@ -137,17 +135,12 @@
         return;
       }
 
-      const adminId = adminSnap.docs[0].id;
-      console.log("✅ Admin ID:", adminId);
-
+      const adminId = adminSnap.docs[0].data().userId; // ✅ correct field
       const productSnap = await getDocs(collection(db, "products"));
-      console.log("📦 Total products in DB:", productSnap.docs.length);
 
       allProducts = productSnap.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(p => p.userId === adminId); // ✅ filter by admin
-
-      console.log("✅ Showing products:", allProducts.length);
+        .filter(p => p.userId === adminId); // ✅ only show current admin's products
 
       if (allProducts.length === 0) {
         document.getElementById("product-list").innerHTML =
