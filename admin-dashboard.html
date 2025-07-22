@@ -131,7 +131,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const userId = localStorage.getItem("userId");
+
+    let currentUserId = null;
 
     function showSection(id) {
       document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
@@ -149,8 +150,13 @@
       const name = document.getElementById('productName').value.trim();
       const price = document.getElementById('productPrice').value.trim();
       const company = document.getElementById('productCompany').value.trim();
-      if (!name || !price || !company) return;
-      db.collection("products").add({ name, price, company, userId }).then(() => {
+      if (!name || !price || !company || !currentUserId) return;
+      db.collection("products").add({
+        name,
+        price,
+        company,
+        userId: currentUserId // ✅ Save correct UID
+      }).then(() => {
         document.getElementById('addProductMsg').innerText = "Product added!";
         document.getElementById('productName').value = "";
         document.getElementById('productPrice').value = "";
@@ -160,7 +166,8 @@
     }
 
     function fetchProducts() {
-      db.collection("products").where("userId", "==", userId).get().then(snapshot => {
+      if (!currentUserId) return;
+      db.collection("products").where("userId", "==", currentUserId).get().then(snapshot => {
         const table = document.getElementById('productTable');
         table.innerHTML = "";
         let total = 0;
@@ -215,8 +222,8 @@
 
     function updatePasscode() {
       const newPasscode = document.getElementById('newPasscode').value.trim();
-      if (!newPasscode) return;
-      db.collection("admins").doc(userId).update({ passcode: newPasscode }).then(() => {
+      if (!newPasscode || !currentUserId) return;
+      db.collection("admins").doc(currentUserId).update({ passcode: newPasscode }).then(() => {
         document.getElementById('passcodeMsg').innerText = "Passcode updated!";
         document.getElementById('currentPasscode').innerText = `Current Passcode: ${newPasscode}`;
       });
@@ -235,6 +242,7 @@
 
     auth.onAuthStateChanged(user => {
       if (user) {
+        currentUserId = user.uid;
         localStorage.setItem("userId", user.uid);
         fetchProducts();
         db.collection("admins").doc(user.uid).get().then(doc => {
