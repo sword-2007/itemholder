@@ -5,12 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Register - ItemHolder</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(to bottom right, #0f0f0f, #1a1a1a);
@@ -21,7 +16,6 @@
       justify-content: center;
       padding: 2rem;
     }
-
     .register-container {
       background-color: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
@@ -31,19 +25,16 @@
       width: 100%;
       box-shadow: 0 0 15px rgba(0, 255, 208, 0.1);
     }
-
     h2 {
       text-align: center;
       margin-bottom: 2rem;
       color: #00ffd0;
       text-shadow: 0 0 10px #00ffd0aa;
     }
-
     .input-container {
       position: relative;
       margin-bottom: 1.2rem;
     }
-
     input {
       width: 100%;
       padding: 0.75rem;
@@ -53,7 +44,6 @@
       color: #fff;
       font-size: 1rem;
     }
-
     .toggle-password {
       position: absolute;
       right: 10px;
@@ -65,11 +55,9 @@
       color: #aaa;
       font-size: 1.1rem;
     }
-
     .toggle-password:hover {
       color: #00ffd0;
     }
-
     .glow-btn {
       background-color: transparent;
       border: 2px solid #00ffd0;
@@ -84,7 +72,6 @@
       position: relative;
       z-index: 1;
     }
-
     .glow-btn::before {
       content: '';
       position: absolute;
@@ -99,17 +86,14 @@
       transition: opacity 0.4s ease;
       filter: blur(10px);
     }
-
     .glow-btn:hover::before {
       opacity: 1;
     }
-
     .glow-btn:hover {
       background-color: #00ffd0;
       color: #000;
       box-shadow: 0 0 15px #00ffd0;
     }
-
     .small-link {
       color: #00ffd0;
       text-align: center;
@@ -119,7 +103,6 @@
       cursor: pointer;
       margin-top: 1rem;
     }
-
     .error-message {
       text-align: center;
       font-size: 0.9rem;
@@ -137,9 +120,7 @@
   </div>
   <div class="input-container">
     <input type="password" id="regPassword" placeholder="Password" />
-    <button class="toggle-password" type="button" onclick="togglePassword()">
-      ▶
-    </button>
+    <button class="toggle-password" type="button" onclick="togglePassword()">▶</button>
   </div>
   <div class="input-container">
     <input type="text" id="regCompany" placeholder="Company Name" />
@@ -196,7 +177,7 @@
       const exists = snapshot.docs.some(doc => doc.data().passcode === passcode);
 
       if (exists) {
-        regMsg.innerText = " This customer passcode is already used. Try another one.";
+        regMsg.innerText = "This customer passcode is already used. Try another one.";
         return;
       }
 
@@ -206,14 +187,15 @@
       await setDoc(doc(db, "admins", uid), {
         email,
         company,
-        passcode
+        passcode,
+        userId: uid // ✅ important for customer filtering!
       });
 
       alert("Registered successfully! Please sign in.");
       window.location.href = "admin.html";
     } catch (error) {
       console.error("Register error:", error.message);
-      regMsg.innerText = " Registration failed: " + error.message;
+      regMsg.innerText = "Registration failed: " + error.message;
     }
   };
 
