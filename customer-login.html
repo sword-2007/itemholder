@@ -1,51 +1,133 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Customer Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Customer Login - ItemHolder</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      background-color: #0f172a;
-      font-family: 'Inter', sans-serif;
-      color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #0f0f0f, #1a1a1a);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
     }
-    .card {
-      background: #1e293b;
+
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
       border-radius: 1rem;
-      padding: 3rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0, 255, 208, 0.1);
     }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #00ffd0;
+      text-shadow: 0 0 10px #00ffd0aa;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #222;
+      color: #fff;
+      font-size: 1rem;
+      transition: 0.3s ease;
+    }
+
     input::placeholder {
       color: #94a3b8;
     }
+
+    .glow-btn {
+      background-color: transparent;
+      border: 2px solid #00ffd0;
+      color: #00ffd0;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .glow-btn::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 10px;
+      background: linear-gradient(45deg, #00ffd0, #00ffa2, #00ffd0);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      filter: blur(10px);
+    }
+
+    .glow-btn:hover::before {
+      opacity: 1;
+    }
+
+    .glow-btn:hover {
+      background-color: #00ffd0;
+      color: #000;
+      box-shadow: 0 0 15px #00ffd0;
+    }
+
+    .error-message {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #f87171;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen px-4">
+<body>
 
-  <div class="card w-full max-w-md">
-    <h1 class="text-3xl font-bold text-center text-blue-400 mb-6">Customer Login</h1>
+<div class="login-container">
+  <h2>Customer Login</h2>
 
-    <label for="passcode" class="block text-lg mb-2">Enter Passcode</label>
-    <input id="passcode" type="text" placeholder="e.g. 112233" class="w-full px-5 py-3 mb-6 text-lg text-black rounded-md outline-none"/>
+  <input id="passcode" type="text" placeholder="Enter Passcode" />
 
-    <button onclick="loginCustomer()" class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 text-lg rounded-md">
-       View Products
-    </button>
-  </div>
+  <button class="glow-btn" onclick="loginCustomer()">View Products</button>
+  <p id="message" class="error-message"></p>
+</div>
 
-  <script>
-    function loginCustomer() {
-      const code = document.getElementById("passcode").value.trim();
-      if (!code) {
-        alert("Please enter a valid passcode.");
-        return;
-      }
-      localStorage.setItem("customerPasscode", code);
-      window.location.href = "customer-view.html";
+<script>
+  function loginCustomer() {
+    const code = document.getElementById("passcode").value.trim();
+    const msg = document.getElementById("message");
+    msg.innerText = "";
+
+    if (!code) {
+      msg.innerText = "Please enter a valid passcode.";
+      return;
     }
-  </script>
+
+    localStorage.setItem("customerPasscode", code);
+    window.location.href = "customer-view.html";
+  }
+</script>
 
 </body>
 </html>
